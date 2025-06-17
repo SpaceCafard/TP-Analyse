@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "spacecafard",
+        "projectKey": "SpaceCafard_TP-Analyse"
+    }
+}
