@@ -128,6 +128,7 @@
                 <data android:mimeType="vnd.android.cursor.dir/playlist"/>
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.screens.search.voice.VoiceSearchActivity"
             android:excludeFromRecents="true"
@@ -158,28 +159,9 @@
             </intent-filter>
 
         </service>
-        <service
-            android:name=".services.DashClockService"
-            android:icon="@drawable/ic_headphones_white"
-            android:label="@string/app_name"
-            android:permission="com.google.android.apps.dashclock.permission.READ_EXTENSION_DATA">
-            <intent-filter>
-                <action android:name="com.google.android.apps.dashclock.Extension"/>
-            </intent-filter>
 
-            <meta-data
-                android:name="protocolVersion"
-                android:value="1"/>
-            <meta-data
-                android:name="description"
-                android:value="@string/extension_description"/>
-        </service>
-
-        <service
-            android:name=".services.ArtworkDownloadService"
-            android:label="@string/download_service"/>
-
-        <receiver android:name="com.simplecity.amp_library.utils.MediaButtonIntentReceiver">
+        <receiver android:name="com.simplecity.amp_library.utils.MediaButtonIntentReceiver"
+            android:exported="true">
             <intent-filter>
                 <action
                     android:name="android.intent.action.MEDIA_BUTTON"
@@ -194,15 +176,7 @@
         <!-- Config Activity for medium Widget -->
         <activity
             android:name=".ui.widgets.WidgetConfigureActivityMedium"
-            android:theme="@style/WallpaperTheme">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
-            </intent-filter>
-        </activity>
-
-        <!-- Config Activity for extra large Widget -->
-        <activity
-            android:name=".ui.widgets.WidgetConfigureActivityExtraLarge"
+            android:exported="true"
             android:theme="@style/WallpaperTheme">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
@@ -212,6 +186,7 @@
         <!-- Broadcast Receiver for medium Widget -->
         <receiver
             android:name=".ui.widgets.WidgetProviderMedium"
+            android:exported="true"
             android:label="Shuttle 4x1">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
@@ -222,70 +197,20 @@
                 android:resource="@xml/widget_provider_medium"/>
         </receiver>
 
-        <!-- Config Activity for small Widget -->
+        <!-- Config Activity for extra large Widget -->
         <activity
-            android:name=".ui.widgets.WidgetConfigureActivitySmall"
+            android:name=".ui.widgets.WidgetConfigureActivityExtraLarge"
+            android:exported="true"
             android:theme="@style/WallpaperTheme">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
             </intent-filter>
         </activity>
-
-        <!-- Broadcast Receiver for small Widget -->
-        <receiver
-            android:name=".ui.widgets.WidgetProviderSmall"
-            android:label="Shuttle 2x1">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_provider_small"/>
-        </receiver>
-
-        <!-- Config Activity for large Widget -->
-        <activity
-            android:name=".ui.widgets.WidgetConfigureActivityLarge"
-            android:theme="@style/WallpaperTheme">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".ui.screens.qcircle.QCircleActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:excludeFromRecents="true"
-            android:icon="@mipmap/ic_launcher"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar.FullScreen">
-
-            <intent-filter>
-                <action android:name="com.lge.quickcover"/>
-                <action android:name="android.intent.action.MAIN"/>
-
-            </intent-filter>
-
-        </activity>
-
-        <!-- Broadcast Receiver for large Widget -->
-        <receiver
-            android:name=".ui.widgets.WidgetProviderLarge"
-            android:label="Shuttle 4x2">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_provider_large"/>
-        </receiver>
 
         <!-- Broadcast Receiver for extra large Widget -->
         <receiver
             android:name=".ui.widgets.WidgetProviderExtraLarge"
+            android:exported="true"
             android:label="Shuttle 4x4">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
@@ -295,26 +220,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_provider_extra_large"/>
         </receiver>
-
-        <provider
-            android:name=".sql.providers.CustomArtworkContentProvider"
-            android:authorities="${applicationId}.custom_artwork.contentprovider"
-            android:exported="false"/>
-
-        <provider
-            android:name=".sql.providers.PlayCountContentProvider"
-            android:authorities="${applicationId}.play_count.contentprovider"
-            android:exported="false"/>
-
-        <provider
-            android:name="android.support.v4.content.FileProvider"
-            android:authorities="${applicationId}.provider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
-        </provider>
 
         <meta-data
             android:name="io.fabric.ApiKey"
