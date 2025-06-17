@@ -96,7 +96,9 @@ public final class CustomCollapsingTextHelper {
     private Interpolator mPositionInterpolator;
     private Interpolator mTextSizeInterpolator;
 
-    private float mCollapsedShadowRadius, mCollapsedShadowDx, mCollapsedShadowDy;
+    private float mCollapsedShadowRadius, 
+    private float mCollapsedShadowDx, 
+    private float mCollapsedShadowDy;
     private int mCollapsedShadowColor;
 
     private float mExpandedShadowRadius, mExpandedShadowDx, mExpandedShadowDy;
@@ -305,9 +307,9 @@ public final class CustomCollapsingTextHelper {
                 return Typeface.create(family, Typeface.NORMAL);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read font family typeface: " + resId);
+        throw new FontReadingException("Unable to read font family typeface: " + resId);
         } finally {
-            a.recycle();
+                    a.recycle();
         }
         return null;
     }
