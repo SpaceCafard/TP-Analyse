@@ -212,11 +212,11 @@ public class SnowfallView extends View {
             this.alpha = alpha;
         }
 
-        float snowX() {
+        float snowXx() {
             return snowX += velX;
         }
 
-        float snowY() {
+        float snowYy() {
             return snowY += velY;
         }
 

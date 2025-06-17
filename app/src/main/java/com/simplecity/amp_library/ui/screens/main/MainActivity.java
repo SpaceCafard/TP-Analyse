@@ -74,17 +74,17 @@ public class MainActivity extends BaseActivity implements
     Repository.SongsRepository songsRepository;
 
     @Inject
-    AnalyticsManager analyticsManager;
+    AnalyticsManager analyticsManagerMain;
 
     @Inject
-    SettingsManager settingsManager;
+    SettingsManager settingsManagerMain;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
 
-        analyticsManager.dropBreadcrumb(TAG, "onCreate()");
+        analyticsManagerMain.dropBreadcrumb(TAG, "onCreate()");
 
         // If we haven't set any defaults, do that now
         if (Aesthetic.isFirstTime(this)) {
@@ -99,7 +99,7 @@ public class MainActivity extends BaseActivity implements
                     .colorStatusBarAuto()
                     .apply();
 
-            analyticsManager.logInitialTheme(theme);
+            analyticsManagerMain.logInitialTheme(theme);
         }
 
         setContentView(R.layout.activity_main);
@@ -130,7 +130,7 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        analyticsManager.dropBreadcrumb(TAG, "onCreate()");
+        analyticsManagerMain.dropBreadcrumb(TAG, "onCreate()");
 
         showChangelogDialog();
     }
@@ -138,7 +138,7 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         super.onServiceConnected(name, service);
-        analyticsManager.dropBreadcrumb(TAG, "onServiceConnected()");
+        analyticsManagerMain.dropBreadcrumb(TAG, "onServiceConnected()");
 
         handlePendingPlaybackRequest();
     }
@@ -154,14 +154,14 @@ public class MainActivity extends BaseActivity implements
     protected void onPause() {
         super.onPause();
 
-        analyticsManager.dropBreadcrumb(TAG, "onPause()");
+        analyticsManagerMain.dropBreadcrumb(TAG, "onPause()");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        analyticsManager.dropBreadcrumb(TAG, "onDestroy()");
+        analyticsManagerMain.dropBreadcrumb(TAG, "onDestroy()");
     }
 
     private void handleIntent(Intent intent) {
@@ -258,17 +258,17 @@ public class MainActivity extends BaseActivity implements
     }
 
     private void showChangelogDialog() {
-        int storedVersionCode = settingsManager.getStoredVersionCode();
+        int storedVersionCode = settingsManagerMain.getStoredVersionCode();
 
         // If we've stored a version code in the past, and it's lower than the current version code,
         // we can show the changelog.
         // Don't show the changelog for first time users.
         if (storedVersionCode != -1 && storedVersionCode < BuildConfig.VERSION_CODE) {
-            if (settingsManager.getShowChangelogOnLaunch()) {
+            if (settingsManagerMain.getShowChangelogOnLaunch()) {
                 ChangelogDialog.Companion.newInstance().show(getSupportFragmentManager());
             }
         }
-        settingsManager.setVersionCode();
+        settingsManagerMain.setVersionCode();
     }
 
     @Override

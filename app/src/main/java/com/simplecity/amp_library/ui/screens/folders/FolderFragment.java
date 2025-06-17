@@ -154,7 +154,7 @@ public class FolderFragment extends BaseFragment implements
     SettingsManager settingsManager;
 
     @Inject
-    AnalyticsManager analyticsManager;
+    AnalyticsManager analyticsManagerFolder;
 
     @Inject
     RingtoneManager ringtoneManager;
@@ -411,7 +411,7 @@ public class FolderFragment extends BaseFragment implements
                 .subscribe(
                         adaptableItems -> {
                             if (adapter != null) {
-                                analyticsManager.dropBreadcrumb(TAG, "setItems()");
+                                analyticsManagerFolder.dropBreadcrumb(TAG, "setItems()");
                                 setItemsDisposable = adapter.setItems(adaptableItems);
                             }
                             if (breadcrumb != null) {

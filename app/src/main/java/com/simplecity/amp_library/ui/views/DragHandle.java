@@ -8,7 +8,7 @@ import io.reactivex.disposables.Disposable;
 
 public class DragHandle extends AestheticTintedImageView {
 
-    private Disposable aestheticDisposable;
+    private Disposable aestheticDisposableDragHandle;
 
     public DragHandle(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -39,14 +39,14 @@ public class DragHandle extends AestheticTintedImageView {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
-            aestheticDisposable = getColorObservable()
+            aestheticDisposableDragHandle = getColorObservable()
                     .subscribe(this::invalidateColors);
         }
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        aestheticDisposable.dispose();
+        aestheticDisposableDragHandle.dispose();
         super.onDetachedFromWindow();
     }
 }
