@@ -34,6 +34,33 @@ public class HttpServer {
 
     private HttpServer() {
         server = new NanoServer();
+        // Initialize mimeTypes map
+        mimeTypes.put("css", "text/css");
+        mimeTypes.put("htm", "text/html");
+        mimeTypes.put("html", "text/html");
+        mimeTypes.put("xml", "text/xml");
+        mimeTypes.put("java", "text/x-java-source, text/java");
+        mimeTypes.put("md", TEXT_PLAIN);
+        mimeTypes.put("txt", TEXT_PLAIN);
+        mimeTypes.put("asc", TEXT_PLAIN);
+        mimeTypes.put("gif", "image/gif");
+        mimeTypes.put("jpg", "image/jpeg");
+        mimeTypes.put("jpeg", "image/jpeg");
+        mimeTypes.put("png", "image/png");
+        mimeTypes.put("mp3", "audio/mpeg");
+        mimeTypes.put("m3u", "audio/mpeg-url");
+        mimeTypes.put("mp4", "video/mp4");
+        mimeTypes.put("ogv", "video/ogg");
+        mimeTypes.put("flv", "video/x-flv");
+        mimeTypes.put("mov", "video/quicktime");
+        mimeTypes.put("swf", "application/x-shockwave-flash");
+        mimeTypes.put("js", "application/javascript");
+        mimeTypes.put("pdf", "application/pdf");
+        mimeTypes.put("doc", "application/msword");
+        mimeTypes.put("ogg", "application/x-ogg");
+        mimeTypes.put("zip", APPLICATION_OCTET_STREAM);
+        mimeTypes.put("exe", APPLICATION_OCTET_STREAM);
+        mimeTypes.put("class", APPLICATION_OCTET_STREAM);
     }
 
     public void serveAudio(String audioUri) {
@@ -144,34 +171,10 @@ public class HttpServer {
                     return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "Image bytes null");
                 }
                 cleanupImageStream();
-                imageInputStream = new ByteArrayInputStream(imageBytesToServe);
-                Log.i(TAG, "Serving image bytes: " + imageBytesToServe.length);
-                return newFixedLengthResponse(Response.Status.OK, "image/png", imageInputStream, imageBytesToServe.length);
-            }
-            Log.e(TAG, "Returning NOT_FOUND response");
-            return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found");
-        }
-    }
+    private static final String TEXT_PLAIN = "text/plain";
+    private static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
-    void cleanupAudioStream() {
-        if (audioInputStream != null) {
-            try {
-                audioInputStream.close();
-            } catch (IOException ignored) {
-            }
-        }
-    }
-
-    void cleanupImageStream() {
-        if (imageInputStream != null) {
-            try {
-                imageInputStream.close();
-            } catch (IOException ignored) {
-            }
-        }
-    }
-
-    private final Map<String, String> MIME_TYPES = new HashMap<String, String>() {{
+    private final Map<String, String> mimeTypes = new HashMap<String, String>();
         put("css", "text/css");
         put("htm", "text/html");
         put("html", "text/html");
@@ -201,6 +204,6 @@ public class HttpServer {
     }};
 
     String getMimeType(String filePath) {
-        return MIME_TYPES.get(filePath.substring(filePath.lastIndexOf(".") + 1));
+        return mimeTypes.get(filePath.substring(filePath.lastIndexOf(".") + 1));
     }
 }
