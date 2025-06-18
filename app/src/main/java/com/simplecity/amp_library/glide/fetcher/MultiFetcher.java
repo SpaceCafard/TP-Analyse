@@ -47,11 +47,26 @@ public class MultiFetcher implements DataFetcher<InputStream> {
 
     @Override
     public InputStream loadData(Priority priority) throws Exception {
+        InputStream inputStream = tryLoadUserSelectedArtwork(priority);
 
-        InputStream inputStream = null;
+        if (inputStream == null) {
+            inputStream = tryLoadFromMediaStore(priority);
+        }
 
-        //Custom/user selected artwork. Loads from a specific source.
-        UserSelectedArtwork userSelectedArtwork = ((ShuttleApplication) applicationContext).userSelectedArtwork.get(artworkProvider.getArtworkKey());
+        if (inputStream == null) {
+            inputStream = tryLoadFromLocalSources(priority);
+        }
+
+        if (inputStream == null) {
+            inputStream = tryLoadFromRemote(priority);
+        }
+
+        return inputStream;
+    }
+
+    private InputStream tryLoadUserSelectedArtwork(Priority priority) {
+        UserSelectedArtwork userSelectedArtwork = ((ShuttleApplication) applicationContext)
+                .userSelectedArtwork.get(artworkProvider.getArtworkKey());
         if (userSelectedArtwork != null) {
             switch (userSelectedArtwork.type) {
                 case ArtworkProvider.Type.MEDIA_STORE:
@@ -66,55 +81,54 @@ public class MultiFetcher implements DataFetcher<InputStream> {
                 case ArtworkProvider.Type.REMOTE:
                     dataFetcher = new RemoteFetcher(artworkProvider);
                     break;
+                default:
+                    return null;
             }
-            inputStream = loadData(dataFetcher, priority);
+            return loadData(dataFetcher, priority);
         }
+        return null;
+    }
 
-        //No user selected artwork. Check local then remote sources, according to user's preferences.
-
-        //Check the MediaStore
-        if (inputStream == null && !settingsManager.ignoreMediaStoreArtwork()) {
+    private InputStream tryLoadFromMediaStore(Priority priority) {
+        if (!settingsManager.ignoreMediaStoreArtwork()) {
             dataFetcher = new MediaStoreFetcher(applicationContext, artworkProvider);
-            inputStream = loadData(dataFetcher, priority);
+            return loadData(dataFetcher, priority);
         }
+        return null;
+    }
 
-        if (inputStream == null) {
-            if (settingsManager.preferEmbeddedArtwork()) {
-                //Check tags
-                if (!settingsManager.ignoreEmbeddedArtwork()) {
-                    dataFetcher = new TagFetcher(artworkProvider);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-                //Check folders
-                if (inputStream == null && !settingsManager.ignoreFolderArtwork()) {
-                    dataFetcher = new FolderFetcher(artworkProvider, null);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-            } else {
-                //Check folders
-                if (!settingsManager.ignoreFolderArtwork()) {
-                    dataFetcher = new FolderFetcher(artworkProvider, null);
-                    inputStream = loadData(dataFetcher, priority);
-                }
-                //Check tags
-                if (inputStream == null && !settingsManager.ignoreEmbeddedArtwork()) {
-                    dataFetcher = new TagFetcher(artworkProvider);
-                    inputStream = loadData(dataFetcher, priority);
-                }
+    private InputStream tryLoadFromLocalSources(Priority priority) {
+        InputStream inputStream = null;
+        if (settingsManager.preferEmbeddedArtwork()) {
+            if (!settingsManager.ignoreEmbeddedArtwork()) {
+                dataFetcher = new TagFetcher(artworkProvider);
+                inputStream = loadData(dataFetcher, priority);
             }
-        }
-
-        if (inputStream == null) {
-            if (allowOfflineDownload
-                    || (settingsManager.canDownloadArtworkAutomatically()
-                    && ShuttleUtils.isOnline(applicationContext, true))) {
-
-                //Last FM
-                dataFetcher = new RemoteFetcher(artworkProvider);
+            if (inputStream == null && !settingsManager.ignoreFolderArtwork()) {
+                dataFetcher = new FolderFetcher(artworkProvider, null);
+                inputStream = loadData(dataFetcher, priority);
+            }
+        } else {
+            if (!settingsManager.ignoreFolderArtwork()) {
+                dataFetcher = new FolderFetcher(artworkProvider, null);
+                inputStream = loadData(dataFetcher, priority);
+            }
+            if (inputStream == null && !settingsManager.ignoreEmbeddedArtwork()) {
+                dataFetcher = new TagFetcher(artworkProvider);
                 inputStream = loadData(dataFetcher, priority);
             }
         }
         return inputStream;
+    }
+
+    private InputStream tryLoadFromRemote(Priority priority) {
+        if (allowOfflineDownload
+                || (settingsManager.canDownloadArtworkAutomatically()
+                && ShuttleUtils.isOnline(applicationContext, true))) {
+            dataFetcher = new RemoteFetcher(artworkProvider);
+            return loadData(dataFetcher, priority);
+        }
+        return null;
     }
 
     @Override
