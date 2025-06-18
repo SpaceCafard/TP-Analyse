@@ -42,7 +42,7 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
 
     GlideListener glideListener;
 
-    public File file;
+    private File file;
 
     private boolean selected;
 
@@ -65,6 +65,10 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
 
     public ArtworkModel getItem() {
         return new ArtworkModel(type, file);
+    }
+
+    public File getFile() {
+        return file;
     }
 
     public void setListener(@Nullable ClickListener listener) {
@@ -101,9 +105,9 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
 
         long time = System.currentTimeMillis();
 
-        holder.textContainer.setBackground(null);
+        holder.getTextContainer().setBackground(null);
         holder.progressBar.setVisibility(View.VISIBLE);
-        holder.lineTwo.setText(null);
+        holder.getLineTwo().setText(null);
 
         Glide.with(holder.itemView.getContext())
                 .using(new TypeLoader(holder.itemView.getContext(), type, file), InputStream.class)
@@ -116,11 +120,9 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
                 .listener(new RequestListener<ArtworkProvider, BitmapAndSize>() {
                     @Override
                     public boolean onException(Exception e, ArtworkProvider model, Target<BitmapAndSize> target, boolean isFirstResource) {
-                        if (glideListener != null) {
-                            if (holder.itemView.getHandler() != null) {
-                                holder.itemView.getHandler().postDelayed(() ->
-                                        glideListener.onArtworkLoadFailed(ArtworkView.this), System.currentTimeMillis() + 1000 - time);
-                            }
+                        if (glideListener != null && holder.itemView.getHandler() != null) {
+                            holder.itemView.getHandler().postDelayed(() ->
+                                    glideListener.onArtworkLoadFailed(ArtworkView.this), System.currentTimeMillis() + 1000 - time);
                         }
                         return false;
                     }
@@ -130,28 +132,28 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
                         return false;
                     }
                 })
-                .into(new ImageViewTarget<BitmapAndSize>(((ViewHolder) holder).imageView) {
+                .into(new ImageViewTarget<BitmapAndSize>(holder.imageView) {
                     @Override
                     protected void setResource(BitmapAndSize resource) {
-                        holder.textContainer.setBackgroundResource(R.drawable.text_protection_scrim_reversed);
+                        holder.getTextContainer().setBackgroundResource(R.drawable.text_protection_scrim_reversed);
                         holder.progressBar.setVisibility(View.GONE);
 
                         holder.imageView.setImageBitmap(resource.bitmap);
-                        holder.lineTwo.setText(String.format("%sx%spx", resource.size.width, resource.size.height));
+                        holder.getLineTwo().setText(String.format("%sx%spx", resource.size.width, resource.size.height));
                     }
                 });
 
-        holder.lineOne.setText(ArtworkModel.getTypeString(holder.itemView.getContext(), type));
+        holder.getLineOne().setText(ArtworkModel.getTypeString(holder.itemView.getContext(), type));
 
         if (type == ArtworkProvider.Type.FOLDER && file != null) {
-            holder.lineOne.setText(file.getName());
+            holder.getLineOne().setText(file.getName());
         }
 
         if (isCustom && file != null && file.getPath().contains("custom_artwork")) {
-            holder.lineOne.setText(holder.itemView.getContext().getString(R.string.artwork_type_custom));
+            holder.getLineOne().setText(holder.itemView.getContext().getString(R.string.artwork_type_custom));
         }
 
-        holder.checkView.setVisibility(isSelected() ? View.VISIBLE : View.GONE);
+        holder.getCheckView().setVisibility(isSelected() ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -168,12 +170,12 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
 
     public static class ViewHolder extends BaseViewHolder<ArtworkView> {
 
-        public ImageView imageView;
-        public TextView lineOne;
-        public TextView lineTwo;
-        public View checkView;
-        public View textContainer;
-        public ProgressBar progressBar;
+        private ImageView imageView;
+        private TextView lineOne;
+        private TextView lineTwo;
+        private View checkView;
+        private View textContainer;
+        private ProgressBar progressBar;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -186,6 +188,26 @@ public class ArtworkView extends BaseViewModel<ArtworkView.ViewHolder> {
             progressBar = itemView.findViewById(R.id.progressBar);
 
             itemView.setOnClickListener(v -> viewModel.onClick());
+        }
+
+        public View getTextContainer() {
+            return textContainer;
+        }
+
+        public TextView getLineOne() {
+            return lineOne;
+        }
+
+        public TextView getLineTwo() {
+            return lineTwo;
+        }
+
+        public ImageView getImageView() {
+            return imageView;
+        }
+
+        public ProgressBar getProgressBar() {
+            return progressBar;
         }
 
         @Override
