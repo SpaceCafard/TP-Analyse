@@ -60,6 +60,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     }
 
     private static final String TAG = "MusicService";
+    private static final String STOP_SELF_CALLED = "stopSelf() called";
 
     private MusicServiceCallbacks musicServiceCallbacks = new MusicServiceCallbacks();
 
@@ -87,7 +88,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     private MusicNotificationHelper notificationHelper;
 
-    private static NotificationStateHandler notificationStateHandler;
+    private NotificationStateHandler notificationStateHandler;
 
     private AlarmManager alarmManager;
 
@@ -193,11 +194,11 @@ public class MusicService extends MediaBrowserServiceCompat {
         registerReceiver(intentReceiver, intentFilter);
 
         // Initialize the delayed shutdown intent
-        Intent shutdownIntent = new Intent(this, MusicService.class);
-        shutdownIntent.setAction(ServiceCommand.SHUTDOWN);
+        Intent shutdownIntentLocal = new Intent(this, MusicService.class);
+        shutdownIntentLocal.setAction(ServiceCommand.SHUTDOWN);
 
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        this.shutdownIntent = PendingIntent.getService(this, 0, shutdownIntent, 0);
+        this.shutdownIntent = PendingIntent.getService(this, 0, shutdownIntentLocal, 0);
 
         analyticsManager.dropBreadcrumb(TAG, "onCreate(), scheduling delayed shutdown");
         scheduleDelayedShutdown();
@@ -281,8 +282,8 @@ public class MusicService extends MediaBrowserServiceCompat {
             scheduleDelayedShutdown();
             return true;
         }
-
-        analyticsManager.dropBreadcrumb(TAG, "stopSelf() called");
+        analyticsManager.dropBreadcrumb(TAG, STOP_SELF_CALLED);
+        stopSelf(serviceStartId);
         stopSelf(serviceStartId);
 
         return true;
@@ -296,8 +297,8 @@ public class MusicService extends MediaBrowserServiceCompat {
         //  playbackManager.willResumePlayback() returns true even after we've manually paused.
         //  This means we don't call stopSelf(), which in turn causes the service to act as if it has crashed, and will recreate itself unnecessarily.
 
-        if (!isPlaying() && !playbackManager.willResumePlayback()) {
-            analyticsManager.dropBreadcrumb(TAG, "stopSelf() called");
+            analyticsManager.dropBreadcrumb(TAG, STOP_SELF_CALLED);
+            stopSelf();
             stopSelf();
         }
 

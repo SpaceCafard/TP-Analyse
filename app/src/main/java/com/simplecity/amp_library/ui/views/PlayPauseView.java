@@ -21,7 +21,6 @@ import kotlin.jvm.functions.Function0;
 
 public class PlayPauseView extends FrameLayout {
 
-    private static final String TAG = "PlayPauseView";
 
     private static final long PLAY_PAUSE_ANIMATION_DURATION = 200;
 
@@ -73,9 +72,6 @@ public class PlayPauseView extends FrameLayout {
         invalidate();
     }
 
-    private int getColor() {
-        return backgroundColor;
-    }
 
     public void setDrawableColor(int color) {
         drawable.setColor(color);
@@ -97,7 +93,7 @@ public class PlayPauseView extends FrameLayout {
     }
 
     public void update() {
-
+        // This method is intentionally left empty for future updates or subclass overrides.
     }
 
     public void toggle(@Nullable Function0<Unit> completion) {
