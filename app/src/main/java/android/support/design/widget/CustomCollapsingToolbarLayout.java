@@ -395,81 +395,79 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
 
-        if (mLastInsets != null) {
-            // Shift down any views which are not set to fit system windows
-            final int insetTop = mLastInsets.getSystemWindowInsetTop();
-            for (int i = 0, z = getChildCount(); i < z; i++) {
-                final View child = getChildAt(i);
-                if (!ViewCompat.getFitsSystemWindows(child)) {
-                    if (child.getTop() < insetTop) {
-                        // If the child isn't set to fit system windows but is drawing within
-                        // the inset offset it down
-                        ViewCompat.offsetTopAndBottom(child, insetTop);
-                    }
-                }
+        shiftDownViewsForInsets();
+        updateCollapsingTitleBounds(left, top, right, bottom);
+        updateChildViewOffsetHelpers();
+        updateMinimumHeightAndToolbarDrawIndex();
+        updateScrimVisibility();
+    }
+
+    private void shiftDownViewsForInsets() {
+        if (mLastInsets == null) return;
+        final int insetTop = mLastInsets.getSystemWindowInsetTop();
+        for (int i = 0, z = getChildCount(); i < z; i++) {
+            final View child = getChildAt(i);
+            if (!ViewCompat.getFitsSystemWindows(child) && child.getTop() < insetTop) {
+                ViewCompat.offsetTopAndBottom(child, insetTop);
             }
         }
+    }
 
-        // Update the collapsed bounds by getting it's transformed bounds
-        if (mCollapsingTitleEnabled && mDummyView != null) {
-            // We only draw the title if the dummy view is being displayed (Toolbar removes
-            // views if there is no space)
-            mDrawCollapsingTitle = ViewCompat.isAttachedToWindow(mDummyView)
-                    && mDummyView.getVisibility() == VISIBLE;
-
-            if (mDrawCollapsingTitle) {
-                final boolean isRtl = ViewCompat.getLayoutDirection(this)
-                        == ViewCompat.LAYOUT_DIRECTION_RTL;
-
-                // Update the collapsed bounds
-                final int maxOffset = getMaxOffsetForPinChild(
-                        mToolbarDirectChild != null ? mToolbarDirectChild : mToolbar);
-                ViewGroupUtils.getDescendantRect(this, mDummyView, mTmpRect);
-                mCollapsingTextHelper.setCollapsedBounds(
-                        mTmpRect.left + (isRtl
-                                ? mToolbar.getTitleMarginEnd()
-                                : mToolbar.getTitleMarginStart()),
-                        mTmpRect.top + maxOffset + mToolbar.getTitleMarginTop(),
-                        mTmpRect.right + (isRtl
-                                ? mToolbar.getTitleMarginStart()
-                                : mToolbar.getTitleMarginEnd()),
-                        mTmpRect.bottom + maxOffset - mToolbar.getTitleMarginBottom());
-
-                // Update the expanded bounds
-                mCollapsingTextHelper.setExpandedBounds(
-                        isRtl ? mExpandedMarginEnd : mExpandedMarginStart,
-                        mTmpRect.top + mExpandedMarginTop,
-                        right - left - (isRtl ? mExpandedMarginStart : mExpandedMarginEnd),
-                        bottom - top - mExpandedMarginBottom);
-                // Now recalculate using the new bounds
-                mCollapsingTextHelper.recalculate();
-            }
+    private void updateCollapsingTitleBounds(int left, int top, int right, int bottom) {
+        if (!(mCollapsingTitleEnabled && mDummyView != null)) {
+            mDrawCollapsingTitle = false;
+            return;
         }
+        mDrawCollapsingTitle = ViewCompat.isAttachedToWindow(mDummyView)
+                && mDummyView.getVisibility() == VISIBLE;
+        if (!mDrawCollapsingTitle) return;
 
-        // Update our child view offset helpers. This needs to be done after the title has been
-        // setup, so that any Toolbars are in their original position
+        final boolean isRtl = ViewCompat.getLayoutDirection(this)
+                == ViewCompat.LAYOUT_DIRECTION_RTL;
+        final int maxOffset = getMaxOffsetForPinChild(
+                mToolbarDirectChild != null ? mToolbarDirectChild : mToolbar);
+        ViewGroupUtils.getDescendantRect(this, mDummyView, mTmpRect);
+
+        mCollapsingTextHelper.setCollapsedBounds(
+                mTmpRect.left + (isRtl
+                        ? mToolbar.getTitleMarginEnd()
+                        : mToolbar.getTitleMarginStart()),
+                mTmpRect.top + maxOffset + mToolbar.getTitleMarginTop(),
+                mTmpRect.right + (isRtl
+                        ? mToolbar.getTitleMarginStart()
+                        : mToolbar.getTitleMarginEnd()),
+                mTmpRect.bottom + maxOffset - mToolbar.getTitleMarginBottom());
+
+        mCollapsingTextHelper.setExpandedBounds(
+                isRtl ? mExpandedMarginEnd : mExpandedMarginStart,
+                mTmpRect.top + mExpandedMarginTop,
+                right - left - (isRtl ? mExpandedMarginStart : mExpandedMarginEnd),
+                bottom - top - mExpandedMarginBottom);
+
+        mCollapsingTextHelper.recalculate();
+    }
+
+    private void updateChildViewOffsetHelpers() {
         for (int i = 0, z = getChildCount(); i < z; i++) {
             getViewOffsetHelper(getChildAt(i)).onViewLayout();
         }
+    }
 
-        // Finally, set our minimum height to enable proper AppBarLayout collapsing
-        if (mToolbar != null) {
-            if (mCollapsingTitleEnabled && TextUtils.isEmpty(mCollapsingTextHelper.getText())) {
-                // If we do not currently have a title, try and grab it from the Toolbar
-                mCollapsingTextHelper.setText(mToolbar.getTitle());
-            }
-            if (mToolbarDirectChild == null || mToolbarDirectChild == this) {
-                setMinimumHeight(getHeightWithMargins(mToolbar));
-                mToolbarDrawIndex = indexOfChild(mToolbar);
-            } else {
-                setMinimumHeight(getHeightWithMargins(mToolbarDirectChild));
-                mToolbarDrawIndex = indexOfChild(mToolbarDirectChild);
-            }
-        } else {
+    private void updateMinimumHeightAndToolbarDrawIndex() {
+        if (mToolbar == null) {
             mToolbarDrawIndex = -1;
+            return;
         }
-
-        updateScrimVisibility();
+        if (mCollapsingTitleEnabled && TextUtils.isEmpty(mCollapsingTextHelper.getText())) {
+            mCollapsingTextHelper.setText(mToolbar.getTitle());
+        }
+        if (mToolbarDirectChild == null || mToolbarDirectChild == this) {
+            setMinimumHeight(getHeightWithMargins(mToolbar));
+            mToolbarDrawIndex = indexOfChild(mToolbar);
+        } else {
+            setMinimumHeight(getHeightWithMargins(mToolbarDirectChild));
+            mToolbarDrawIndex = indexOfChild(mToolbarDirectChild);
+        }
     }
 
     /**
@@ -1235,15 +1233,14 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
                 final ViewOffsetHelper offsetHelper = getViewOffsetHelper(child);
 
-                switch (lp.mCollapseMode) {
-                    case LayoutParams.COLLAPSE_MODE_PIN:
-                        offsetHelper.setTopAndBottomOffset(
-                                MathUtils.clamp(-verticalOffset, 0, getMaxOffsetForPinChild(child)));
-                        break;
-                    case LayoutParams.COLLAPSE_MODE_PARALLAX:
-                        offsetHelper.setTopAndBottomOffset(
-                                Math.round(-verticalOffset * lp.mParallaxMult));
-                        break;
+                if (lp.mCollapseMode == LayoutParams.COLLAPSE_MODE_PIN) {
+                    offsetHelper.setTopAndBottomOffset(
+                            MathUtils.clamp(-verticalOffset, 0, getMaxOffsetForPinChild(child)));
+                } else if (lp.mCollapseMode == LayoutParams.COLLAPSE_MODE_PARALLAX) {
+                    offsetHelper.setTopAndBottomOffset(
+                            Math.round(-verticalOffset * lp.mParallaxMult));
+                } else {
+                    // default case: do nothing
                 }
             }
 
