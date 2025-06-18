@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 
 public class StringUtils {
 
-    private static final String TAG = "StringUtils";
 
     private static StringBuilder sFormatBuilder = new StringBuilder();
 
@@ -27,17 +26,15 @@ public class StringUtils {
     }
 
     /**
-     * Method makeTimeString.
-     * <p>
-     * Todo: Move to StringUtils or somewhere else
-     *
-     * @param context Context
-     * @param secs long
-     * @return String
-     */
+         * Method makeTimeString.
+         * <p>
+         *
+         * @param context Context
+         * @param secs long
+         * @return String
+         */
     public static String makeTimeString(@NonNull Context context, long secs) {
         sFormatBuilder.setLength(0);
-        //return (secs < 0 ? "- " : "") + (Math.abs(secs) < 3600 ? makeShortTimeString(context, Math.abs(secs)) : makeLongTimeString(context, Math.abs(secs)));
         return Math.abs(secs) < 3600 ? makeShortTimeString(context, secs) : makeLongTimeString(context, secs);
     }
 
@@ -262,13 +259,14 @@ public class StringUtils {
         if (m == 0) {
             return 0D;
         }
-        final double j = ((m / first.length() + m / second.length() + (m - mtp[1]) / m)) / 3;
+        final double j = (m / first.length() + m / second.length() + (m - mtp[1]) / m) / 3;
         final double jw = j < 0.7D ? j : j + Math.min(DEFAULT_SCALING_FACTOR, 1D / mtp[3]) * mtp[2] * (1D - j);
         return Math.round(jw * 100.0D) / 100.0D;
     }
 
     private static int[] matches(final CharSequence first, final CharSequence second) {
-        CharSequence max, min;
+        CharSequence max;
+        CharSequence min;
         if (first.length() > second.length()) {
             max = first;
             min = second;
@@ -280,6 +278,18 @@ public class StringUtils {
         final int[] matchIndexes = new int[min.length()];
         Arrays.fill(matchIndexes, -1);
         final boolean[] matchFlags = new boolean[max.length()];
+
+        int matches = findMatches(min, max, range, matchIndexes, matchFlags);
+        char[] ms1 = extractMatchedChars(min, matchIndexes, matches);
+        char[] ms2 = extractMatchedChars(max, matchFlags, matches);
+
+        int transpositions = countTranspositions(ms1, ms2);
+        int prefix = countPrefix(first, second);
+
+        return new int[] { matches, transpositions / 2, prefix, max.length() };
+    }
+
+    private static int findMatches(CharSequence min, CharSequence max, int range, int[] matchIndexes, boolean[] matchFlags) {
         int matches = 0;
         for (int mi = 0; mi < min.length(); mi++) {
             final char c1 = min.charAt(mi);
@@ -292,35 +302,53 @@ public class StringUtils {
                 }
             }
         }
-        final char[] ms1 = new char[matches];
-        final char[] ms2 = new char[matches];
-        for (int i = 0, si = 0; i < min.length(); i++) {
+        return matches;
+    }
+
+    private static char[] extractMatchedChars(CharSequence seq, int[] matchIndexes, int matches) {
+        char[] ms = new char[matches];
+        int si = 0;
+        for (int i = 0; i < matchIndexes.length; i++) {
             if (matchIndexes[i] != -1) {
-                ms1[si] = min.charAt(i);
-                si++;
+                ms[si++] = seq.charAt(i);
             }
         }
-        for (int i = 0, si = 0; i < max.length(); i++) {
+        return ms;
+    }
+
+    private static char[] extractMatchedChars(CharSequence seq, boolean[] matchFlags, int matches) {
+        char[] ms = new char[matches];
+        int si = 0;
+        for (int i = 0; i < matchFlags.length; i++) {
             if (matchFlags[i]) {
-                ms2[si] = max.charAt(i);
+                ms[si] = seq.charAt(i);
                 si++;
             }
         }
+        return ms;
+    }
+
+    private static int countTranspositions(char[] ms1, char[] ms2) {
         int transpositions = 0;
         for (int mi = 0; mi < ms1.length; mi++) {
             if (ms1[mi] != ms2[mi]) {
                 transpositions++;
             }
         }
+        return transpositions;
+    }
+
+    private static int countPrefix(CharSequence first, CharSequence second) {
         int prefix = 0;
-        for (int mi = 0; mi < min.length(); mi++) {
+        int max = Math.min(first.length(), second.length());
+        for (int mi = 0; mi < max; mi++) {
             if (first.charAt(mi) == second.charAt(mi)) {
                 prefix++;
             } else {
                 break;
             }
         }
-        return new int[] { matches, transpositions / 2, prefix, max.length() };
+        return prefix;
     }
 
     public static int parseInt(@Nullable String string) {
@@ -328,7 +356,7 @@ public class StringUtils {
             try {
                 return Integer.parseInt(string);
             } catch (NumberFormatException ignored) {
-
+                // Exception ignored because we return -1 for invalid input
             }
         }
         return -1;
