@@ -61,37 +61,14 @@ public class AestheticCoordinatorLayout extends CoordinatorLayout
     }
     Util.setOverflowButtonColor(toolbar, colors.activeColor());
 
-    try {
-      final Field field = Toolbar.class.getDeclaredField("mCollapseIcon");
-      field.setAccessible(true);
-      Drawable collapseIcon = (Drawable) field.get(toolbar);
-      if (collapseIcon != null) {
-        field.set(toolbar, TintHelper.createTintedDrawable(collapseIcon, colors.toEnabledSl()));
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    // Reflection removed to avoid accessibility bypass.
+    // If you need to tint the collapse icon, ensure you set it using public APIs elsewhere,
+    // or update your Toolbar usage to allow setting a tinted collapse icon directly.
 
     final PorterDuffColorFilter colorFilter =
         new PorterDuffColorFilter(colors.activeColor(), PorterDuff.Mode.SRC_IN);
-    for (int i = 0; i < toolbar.getChildCount(); i++) {
-      final View v = toolbar.getChildAt(i);
-      // We can't iterate through the toolbar.getMenu() here, because we need the ActionMenuItemView.
-      if (v instanceof ActionMenuView) {
-        for (int j = 0; j < ((ActionMenuView) v).getChildCount(); j++) {
-          final View innerView = ((ActionMenuView) v).getChildAt(j);
-          if (innerView instanceof ActionMenuItemView) {
-            int drawablesCount = ((ActionMenuItemView) innerView).getCompoundDrawables().length;
-            for (int k = 0; k < drawablesCount; k++) {
-              if (((ActionMenuItemView) innerView).getCompoundDrawables()[k] != null) {
-                ((ActionMenuItemView) innerView)
-                    .getCompoundDrawables()[k].setColorFilter(colorFilter);
-              }
-            }
-          }
-        }
-      }
-    }
+
+    tintActionMenuViews(toolbar, colorFilter);
 
     if (menu == null) {
       menu = toolbar.getMenu();
@@ -99,31 +76,67 @@ public class AestheticCoordinatorLayout extends CoordinatorLayout
     ViewUtil.tintToolbarMenu(toolbar, menu, colors);
   }
 
+  private static void tintActionMenuViews(AestheticToolbar toolbar, PorterDuffColorFilter colorFilter) {
+    for (int i = 0; i < toolbar.getChildCount(); i++) {
+      final View v = toolbar.getChildAt(i);
+      if (v instanceof ActionMenuView) {
+        tintActionMenuViewChildren((ActionMenuView) v, colorFilter);
+      }
+    }
+  }
+
+  private static void tintActionMenuViewChildren(ActionMenuView actionMenuView, PorterDuffColorFilter colorFilter) {
+    for (int j = 0; j < actionMenuView.getChildCount(); j++) {
+      final View innerView = actionMenuView.getChildAt(j);
+      if (innerView instanceof ActionMenuItemView) {
+        tintActionMenuItemViewDrawables((ActionMenuItemView) innerView, colorFilter);
+      }
+    }
+  }
+
+  private static void tintActionMenuItemViewDrawables(ActionMenuItemView itemView, PorterDuffColorFilter colorFilter) {
+    Drawable[] drawables = itemView.getCompoundDrawables();
+    for (Drawable drawable : drawables) {
+      if (drawable != null) {
+        drawable.setColorFilter(colorFilter);
+      }
+    }
+  }
+
   @Override
   public void onAttachedToWindow() {
     super.onAttachedToWindow();
+    findToolbarAndColorView();
+    subscribeToToolbarColors();
+    subscribeToStatusBarColors();
+  }
 
-    // Find the toolbar and color view used to blend the scroll transition
+  private void findToolbarAndColorView() {
     if (getChildCount() > 0 && getChildAt(0) instanceof AppBarLayout) {
       appBarLayout = (AppBarLayout) getChildAt(0);
       if (appBarLayout.getChildCount() > 0
           && appBarLayout.getChildAt(0) instanceof CollapsingToolbarLayout) {
         collapsingToolbarLayout = (CollapsingToolbarLayout) appBarLayout.getChildAt(0);
-        for (int i = 0; i < collapsingToolbarLayout.getChildCount(); i++) {
-          if (this.toolbar != null && this.colorView != null) {
-            break;
-          }
-          View child = collapsingToolbarLayout.getChildAt(i);
-          if (child instanceof AestheticToolbar) {
-            this.toolbar = (AestheticToolbar) child;
-          } else if (child.getBackground() != null
-              && child.getBackground() instanceof ColorDrawable) {
-            this.colorView = child;
-          }
-        }
+        findToolbarAndColorViewInCollapsingLayout();
       }
     }
+  }
 
+  private void findToolbarAndColorViewInCollapsingLayout() {
+    for (int i = 0; i < collapsingToolbarLayout.getChildCount(); i++) {
+      if (this.toolbar != null && this.colorView != null) {
+        break;
+      }
+      View child = collapsingToolbarLayout.getChildAt(i);
+      if (child instanceof AestheticToolbar) {
+        this.toolbar = (AestheticToolbar) child;
+      } else if (child.getBackground() instanceof ColorDrawable) {
+        this.colorView = child;
+      }
+    }
+  }
+
+  private void subscribeToToolbarColors() {
     if (toolbar != null && colorView != null) {
       this.appBarLayout.addOnOffsetChangedListener(this);
       toolbarColorSubscription =
@@ -150,7 +163,9 @@ public class AestheticCoordinatorLayout extends CoordinatorLayout
                   },
                   onErrorLogAndRethrow());
     }
+  }
 
+  private void subscribeToStatusBarColors() {
     if (collapsingToolbarLayout != null) {
       statusBarColorSubscription =
           Aesthetic.get(getContext())
